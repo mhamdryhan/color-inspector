@@ -39,7 +39,7 @@ img = Image.open(uploaded_file).convert("RGB")
 MAX_W = 900
 ratio = min(1.0, MAX_W / img.width)
 display_img = img.resize((int(img.width * ratio), int(img.height * ratio)))
-img_array = np.array(display_img)
+img_array = np.asarray(display_img)  # numpy array (uint8)
 height, width, _ = img_array.shape
 
 st.caption(f"Pratinjau: **{width}×{height}px** (asli **{img.width}×{img.height}px**).")
@@ -55,7 +55,7 @@ with left:
     if coords is not None:
         x, y = int(coords["x"]), int(coords["y"])
         if 0 <= x < width and 0 <= y < height:
-            r, g, b = map(int, img_array[y, x])
+            r, g, b = (int(v) for v in img_array[y, x])  # pastikan int Python
             hex_code = rgb_to_hex_upper((r, g, b))
             st.success(f"**Koordinat:** ({x}, {y})\n\n**RGB:** ({r}, {g}, {b})\n\n**HEX:** {hex_code}")
             st.markdown(
@@ -70,11 +70,12 @@ with left:
                 unsafe_allow_html=True,
             )
 
-    # Bonus: warna rata-rata (tetap otomatis)
+    # Rata-rata warna (konversi ke int Python)
     st.markdown("#### 🧮 Rata-rata Warna Gambar")
-    avg_rgb = tuple(np.mean(img_array.reshape(-1, 3), axis=0).astype(int))
+    avg_rgb = tuple(map(int, np.round(img_array.reshape(-1, 3).mean(axis=0))))  # (R,G,B) -> int
     avg_hex = rgb_to_hex_upper(avg_rgb)
-    st.write(f"RGB: {avg_rgb}  |  HEX: {avg_hex}")
+    r_avg, g_avg, b_avg = avg_rgb
+    st.write(f"RGB: ({r_avg}, {g_avg}, {b_avg})  |  HEX: {avg_hex}")
     st.markdown(
         f"""
         <div style="
@@ -101,11 +102,11 @@ with right:
     for y in ys:
         row = []
         for x in xs:
-            r, g, b = img_array[y, x]
+            r, g, b = (int(v) for v in img_array[y, x])  # pastikan int Python
             row.append(rgb_to_hex_upper((r, g, b)))
         grid_hex.append(row)
 
-    # label selalu tampil (tanpa toggle)
+    # label selalu tampil
     x_labels = [str(x) for x in xs]
     y_labels = [str(y) for y in ys]
 
@@ -121,9 +122,9 @@ with right:
     st.dataframe(df_grid.style.applymap(style_cell), use_container_width=True)
     st.caption(f"Grid warna otomatis • sampling tiap **{step}px** • Kolom = X, Baris = Y.")
 
-    # Export CSV (panjang)
+    # Export CSV (format panjang) — paksa int Python agar bersih
     coords_long = [(x, y) for y in ys for x in xs]
-    rgb_long = [tuple(map(int, img_array[y, x])) for (x, y) in coords_long]
+    rgb_long = [tuple(int(v) for v in img_array[y, x]) for (x, y) in coords_long]
     hex_long = [rgb_to_hex_upper(rgb) for rgb in rgb_long]
 
     df_long = pd.DataFrame(coords_long, columns=["X", "Y"])
