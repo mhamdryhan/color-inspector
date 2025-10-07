@@ -29,7 +29,7 @@ uploaded_file = st.file_uploader(
 )
 
 if not uploaded_file:
-    st.info("Belum ada gambar. Unggah dulu untuk mulai inspeksi warna.")
+    st.info("Belum ada gambar. Unggah untuk mulai inspeksi warna.")
     st.stop()
 
 # Baca + resize otomatis (tanpa kontrol)
